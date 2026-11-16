@@ -3,20 +3,7 @@
 # organizer.sh
 # African Leadership University - Introduction to Python Programming and Databases
 # Lab 2 - BSE Year 1, Trimester 2
-#
-# Archives the course grade data after grade-evaluator.py has processed it:
-#   1. creates the archive/ directory if it does not already exist
-#   2. moves grades.csv into archive/ with a timestamp in the filename
-#   3. creates a fresh, empty grades.csv ready for the next batch of grades
-#   4. appends the details of the operation to organizer.log
-#
-# Uses only standard Unix utilities - no external tools required.
-#
-# Usage:  ./organizer.sh
-#
 
-# Stop on errors, on unset variables, and on failures inside pipelines so that
-# the script never carries on with a half-finished archive.
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
@@ -27,17 +14,14 @@ SOURCE_FILE="grades.csv"
 ARCHIVE_DIR="archive"
 LOG_FILE="organizer.log"
 
-# Timestamp used in the archived filename, e.g. 20251105-170000
 TIMESTAMP="$(date +"%Y%m%d-%H%M%S")"
 
-# Human readable timestamp used at the start of each log line
 LOG_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Print an error message (to stderr) and stop the script.
 abort() {
     echo "" >&2
     echo "ERROR: $1" >&2
@@ -73,8 +57,6 @@ if [ ! -r "$SOURCE_FILE" ]; then
           "Make it readable with: chmod +r $SOURCE_FILE"
 fi
 
-# Count the data rows (every line after the header) purely for the report and
-# the log. An empty file counts as 0 rows rather than failing.
 if [ -s "$SOURCE_FILE" ]; then
     TOTAL_LINES="$(wc -l < "$SOURCE_FILE" | tr -d ' ')"
     # A file whose last line has no trailing newline still holds that line.
@@ -115,8 +97,6 @@ fi
 ARCHIVED_NAME="grades_${TIMESTAMP}.csv"
 ARCHIVED_PATH="${ARCHIVE_DIR}/${ARCHIVED_NAME}"
 
-# Two runs within the same second would otherwise overwrite each other, so add
-# a counter if that exact name is already taken.
 COPY_NUMBER=1
 while [ -e "$ARCHIVED_PATH" ]; do
     COPY_NUMBER="$((COPY_NUMBER + 1))"
@@ -146,8 +126,6 @@ echo "Workspace: created a new empty '$SOURCE_FILE'."
 # Step 5 - Logging: append this run to organizer.log
 # ---------------------------------------------------------------------------
 
-# Write a one-off header the first time the log is created, so the file
-# explains itself. Existing logs are only ever appended to.
 if [ ! -e "$LOG_FILE" ]; then
     {
         echo "# organizer.log - archive history for grades.csv"

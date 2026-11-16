@@ -21,8 +21,6 @@ import os
 
 REQUIRED_COLUMNS = ["assignment", "group", "score", "weight"]
 
-# Accepted categories. The key is the lowercase form used for matching, the
-# value is the tidy form used when printing.
 VALID_GROUPS = {"formative": "Formative", "summative": "Summative"}
 
 MIN_SCORE = 0.0
@@ -32,11 +30,9 @@ EXPECTED_TOTAL_WEIGHT = 100.0
 EXPECTED_FORMATIVE_WEIGHT = 60.0
 EXPECTED_SUMMATIVE_WEIGHT = 40.0
 
-PASS_MARK = 50.0   # minimum percentage required in EACH category
-GPA_SCALE = 5.0    # GPA = (total grade / 100) * 5.0
+PASS_MARK = 50.0  
+GPA_SCALE = 5.0    
 
-# Small tolerance so that float arithmetic such as 59.999999999 is still
-# treated as 60 when comparing weight totals.
 TOLERANCE = 0.000001
 
 
@@ -118,24 +114,19 @@ def load_csv_data():
     skipped_blank_rows = 0
 
     try:
-        # 'utf-8-sig' strips the invisible byte-order mark that Excel adds when
-        # it saves a CSV, which would otherwise hide the 'assignment' column.
         with open(filename, mode="r", encoding="utf-8-sig",
                   newline="") as file:
             reader = csv.DictReader(file)
 
-            # a) Make sure there is a header at all.
             if reader.fieldnames is None:
                 stop_with_error(
                     f"The file '{filename}' has no header row.",
                     "The first line must be: assignment,group,score,weight",
                 )
 
-            # b) Normalise the header so that ' Score ' and 'score' both work.
             header = [clean(name).lower() for name in reader.fieldnames]
             reader.fieldnames = header
 
-            # c) Make sure every column we need is present.
             missing = []
             for column in REQUIRED_COLUMNS:
                 if column not in header:
@@ -147,13 +138,9 @@ def load_csv_data():
                     "The header row must be: assignment,group,score,weight",
                 )
 
-            # d) Read the rows. Line numbers start at 2 because line 1 is the
-            #    header - this makes error messages easy to act on.
             line_number = 1
             for row in reader:
                 line_number += 1
-
-                # Skip completely blank lines instead of crashing on them.
                 if is_blank_row(row):
                     skipped_blank_rows += 1
                     continue
@@ -202,7 +189,6 @@ def list_csv_files():
 def is_blank_row(row):
     """True when every value in the row is empty or missing."""
     for value in row.values():
-        # A row with extra columns stores them in a list under the key None.
         if isinstance(value, list):
             for extra in value:
                 if clean(extra) != "":
@@ -224,7 +210,6 @@ def build_record(row, line_number, filename):
 
     where = f"line {line_number} of '{filename}'"
 
-    # Every field must actually contain something.
     if assignment == "":
         stop_with_error(
             f"Missing assignment name on {where}.",
@@ -246,14 +231,12 @@ def build_record(row, line_number, filename):
             "The weight must be a number, e.g. 20.",
         )
 
-    # The group must be one we recognise.
     if group.lower() not in VALID_GROUPS:
         stop_with_error(
             f"Unknown group '{group}' for '{assignment}' on {where}.",
             "The group must be either Formative or Summative.",
         )
 
-    # Convert the text from the CSV into numbers before any arithmetic.
     try:
         score = float(raw_score)
     except ValueError:
@@ -419,13 +402,11 @@ def find_resubmissions(data):
     if len(failed) == 0:
         return []
 
-    # Find the highest weight among the failed formative assignments.
     highest_weight = failed[0]["weight"]
     for record in failed:
         if record["weight"] > highest_weight:
             highest_weight = record["weight"]
 
-    # Collect every failed assignment sharing that highest weight.
     eligible = []
     for record in failed:
         if is_close(record["weight"], highest_weight):
@@ -469,11 +450,9 @@ def evaluate_grades(data):
     """
     print("\n--- Processing Grades ---")
 
-    # a) and b) - nothing is calculated until the data is known to be sound.
     validate_scores(data)
     validate_weights(data)
 
-    # c) Weighted scores per category and overall.
     formative_points = category_points(data, "Formative")
     summative_points = category_points(data, "Summative")
     total_grade = formative_points + summative_points
@@ -483,7 +462,6 @@ def evaluate_grades(data):
     summative_percentage = percentage_of(
         summative_points, EXPECTED_SUMMATIVE_WEIGHT)
 
-    # GPA = (Total Grade / 100) * 5.0
     gpa = total_grade / 100.0 * GPA_SCALE
 
     print_transcript(data)
@@ -502,7 +480,6 @@ def evaluate_grades(data):
     print(f"GPA         : {gpa:.2f} / {GPA_SCALE:.1f}   "
           f"[({total_grade:.2f} / 100) x {GPA_SCALE:.1f}]")
 
-    # d) A student passes only when BOTH categories reach the pass mark.
     passed_formative = formative_percentage >= PASS_MARK
     passed_summative = summative_percentage >= PASS_MARK
     passed = passed_formative and passed_summative
@@ -514,7 +491,6 @@ def evaluate_grades(data):
     print(f"  Summative {summative_percentage:6.2f}%  ->  "
           f"{'PASS' if passed_summative else 'FAIL'}")
 
-    # f) The final decision.
     print("\n" + "=" * 62)
     if passed:
         print("FINAL STATUS: PASSED")
@@ -532,7 +508,6 @@ def evaluate_grades(data):
                            f"({summative_percentage:.2f}%)")
         print("Reason: " + "; ".join(reasons) + ".")
 
-    # e) Resubmission options.
     print("\n--- Resubmission ---")
     eligible = find_resubmissions(data)
 
@@ -555,8 +530,6 @@ def evaluate_grades(data):
 
 
 if __name__ == "__main__":
-    # 1. Load the data
     course_data = load_csv_data()
 
-    # 2. Process the features
     evaluate_grades(course_data)
