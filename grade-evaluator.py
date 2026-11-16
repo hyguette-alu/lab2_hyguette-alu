@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Student Grade Evaluator
 African Leadership University - Introduction to Python Programming and Databases
@@ -117,7 +118,10 @@ def load_csv_data():
     skipped_blank_rows = 0
 
     try:
-        with open(filename, mode="r", encoding="utf-8", newline="") as file:
+        # 'utf-8-sig' strips the invisible byte-order mark that Excel adds when
+        # it saves a CSV, which would otherwise hide the 'assignment' column.
+        with open(filename, mode="r", encoding="utf-8-sig",
+                  newline="") as file:
             reader = csv.DictReader(file)
 
             # a) Make sure there is a header at all.

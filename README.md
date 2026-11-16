@@ -1,3 +1,12 @@
+# Lab 2 — Student Grade Evaluator & Data Organizer
+
+African Leadership University — Introduction to Python Programming and Databases
+BSE Year 1, Trimester 2 · Individual Coding Lab
+
+Repository: `lab2_hyguette-alu`
+
+---
+
 ## What this project does
 
 This lab has two parts that work together:
@@ -80,6 +89,69 @@ What it does, in order:
 
 `organizer.log` is never overwritten — entries accumulate across every run.
 
+> **Note:** `organizer.sh` is deliberately *not* run inside this repository before
+> submission, because step 4 replaces `grades.csv` with an empty file and the lab
+> requires the populated `grades.csv` to be present. `archive/` and `organizer.log`
+> are therefore generated artifacts that appear the first time you run the script.
+
+---
+
+## The grading rules implemented
+
+| Rule | Implementation |
+| --- | --- |
+| Grade validation | Every score must be between 0 and 100 |
+| Weight validation | All weights total exactly 100; Formative total exactly 60; Summative total exactly 40 |
+| GPA | `GPA = (Total Grade / 100) × 5.0`, on a 5.0 scale |
+| Pass/Fail | PASSED only when the student reaches **≥ 50% in both** categories (not on the overall average) |
+| Resubmission | The *failed* (< 50%) formative assignment with the **highest weight**; all assignments tied on that weight are listed |
+
+---
+
+## Testing — cross-check against the expected transcript
+
+Running the program on the committed `grades.csv` produces:
+
+| Assignment | Group | Score | Weight | Earned |
+| --- | --- | --- | --- | --- |
+| Quiz | Formative | 85 | 20 | 17.00 |
+| Group Exercise | Formative | 40 | 20 | 8.00 |
+| Functions and Debugging Lab | Formative | 45 | 20 | 9.00 |
+| Midterm Project - Simple Calculator | Summative | 70 | 20 | 14.00 |
+| Final Project - Text-Based Game | Summative | 60 | 20 | 12.00 |
+
+- Formative: **34.00 / 60 → 56.67%** → PASS
+- Summative: **26.00 / 40 → 65.00%** → PASS
+- Total Grade: **60.00 / 100**
+- GPA: **(60.00 / 100) × 5.0 = 3.00**
+- Final status: **PASSED**
+- Eligible for resubmission (tie on the highest weight, 20): **Group Exercise** (40) and
+  **Functions and Debugging Lab** (45)
+
+These figures match the transcript structure provided with the assignment.
+
+### Edge cases verified
+
+Each of the following was tested and produces a clear, named error instead of a crash:
+
+| Scenario | Result |
+| --- | --- |
+| File does not exist | Error naming the file, plus a list of the `.csv` files in the folder |
+| Empty file (0 bytes) | Error explaining a header plus one data row is needed |
+| Header present but no data rows | Error asking for at least one assignment row |
+| Missing or misnamed columns | Error naming exactly which column(s) are absent |
+| Blank rows inside the file | Skipped, counted, and reported as a note |
+| Non-numeric score or weight (`abc`, `80%`) | Error naming the value, the assignment and the line number |
+| Empty field in a row | Error naming the field, the assignment and the line number |
+| Score outside 0–100 | Every offending score listed before the program stops |
+| Weights not 100 / 60 / 40 | Each wrong total listed with how far off it is |
+| Unknown group (e.g. `Peer`) | Error stating the group must be Formative or Summative |
+| Mixed-case / padded headers and groups | Accepted (`SCORE`, ` Group `, `formative` all work) |
+| CSV saved from Excel (byte-order mark) | Accepted — the BOM is stripped on read |
+| `grades.csv` missing when archiving | `organizer.sh` stops with an error and changes nothing |
+| `archive/` already exists | Reused rather than recreated |
+| Two runs in the same second | A counter is appended so no archive is overwritten |
+
 ---
 
 ## Build steps
@@ -90,4 +162,4 @@ The work is committed in stages so the history shows how the solution was built:
 2. `grades.csv` — source data verified against the expected transcript
 3. `grade-evaluator.py` — validation, GPA, pass/fail, resubmission logic
 4. `organizer.sh` — archiving, workspace reset, logging
-5. Testing pass — edge cases and final README updates
+5. Testing pass — edge cases verified and documented above
